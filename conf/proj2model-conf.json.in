@@ -1,0 +1,20 @@
+{
+  "project" : {
+    "name": "@PROJECT_NAME@",
+    "compile-commands-json": "@PROJECT_SOURCE_DIR@/build",
+    "root-dir": "@PROJECT_SOURCE_DIR@",
+    "path-filters": [
+      { "path": "include/*", "type": "include" },
+      { "path": "src/*", "type": "include" },
+      { "path": "standalone/*", "type": "include" },
+      { "path": "build/*", "type": "exclude" },
+      { "path": "test/*", "type": "exclude" }
+    ]
+  },
+  "output": {
+    "temp-dir": "temp",
+    "result-file": "result",
+    "index-file": "index",
+    "type": "json"
+  }
+}

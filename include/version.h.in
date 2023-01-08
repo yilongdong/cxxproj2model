@@ -1,0 +1,10 @@
+#pragma once
+/**
+ * 使用cmake生成，请在.h.in文件上修改
+ */
+#include <string>
+
+[[maybe_unused]] static const inline int VERSION_MAJOR = @PROJECT_VERSION_MAJOR@;
+[[maybe_unused]] static const inline int VERSION_MINOR = @PROJECT_VERSION_MINOR@;
+[[maybe_unused]] static const inline std::string VERSION = "v@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@";
+[[maybe_unused]] static const inline std::string COMPILE_TIMESTAMP = "@COMPILE_TIMESTAMP@";
