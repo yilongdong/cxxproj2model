@@ -1,2 +1,0 @@
-#include "comm/log.h"
-

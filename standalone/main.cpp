@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <regex>
+#include <vector>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/Tooling.h>
@@ -6,36 +8,32 @@
 #include <llvm/Support/CommandLine.h>
 #include <gflags/gflags.h>
 #include "version.h"
-#include "comm/log.h"
-#include "proj2model/Config.h"
+#include "Beacon/BeaconFrontendAction.h"
+
 using namespace clang;
 using namespace clang::tooling;
-
 using Config = proj2model::Config;
-//namespace beacon {
-//
-//    class BeaconFrontendAction : public clang::ASTFrontendAction {
-//    protected:
-//        std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {
-//            Preprocessor &PP = CI.getPreprocessor();
-//            PP.addPPCallbacks(
-//                    std::make_unique<PPCallbacksTracker>(Filters, CallbackCalls, PP));
-//            return std::make_unique<ASTConsumer>();
-//        }
-//    };
-//
-//    class BeaconFrontendActionFactory : public tooling::FrontendActionFactory {
-//        std::unique_ptr<FrontendAction> create() override {
-//            return std::make_unique<BeaconFrontendAction>()
-//        }
-//    };
-//}
-//class CodeBeaconGenFrontendAction : public clang::ASTFrontendAction {
-//public:
-//    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance &Compiler, llvm::StringRef InFile) override {
-//        return nullptr;
-//    }
-//};
+
+namespace beacon {
+// https://clang.llvm.org/extra/pp-trace.html
+    class BeaconFrontendActionFactory : public clang::tooling::FrontendActionFactory {
+        std::unique_ptr<clang::FrontendAction> create() override {
+            static std::vector<std::regex> filters {
+                std::regex("^/Library/Developer/CommandLineTools/SDKs/.*"),
+                std::regex(R"(^/usr/local/bin/\.\./include/c\+\+/.*)"),
+                std::regex ("^/usr/local/include/gflags/.*"),
+                std::regex ("^/usr/local/include/llvm/.*"),
+                std::regex ("^/usr/local/include/llvm-c/.*"),
+                std::regex ("^/usr/local/include/clang/.*"),
+                std::regex ("^/usr/local/include/clang-c/.*"),
+                std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/build/.*"),
+            };
+
+            return std::make_unique<BeaconFrontendAction>(filters);
+        }
+    };
+}
+
 
 
 DEFINE_string(conf, "", "配置文件路径");
@@ -49,7 +47,7 @@ int main(int argc, char **argv) {
     std::string errorMsg;
     auto db = CompilationDatabase::loadFromDirectory(Config::get().project.compdb, errorMsg);
     if (db == nullptr) {
-        LOG_ERROR(errorMsg);
+//        LOG_ERROR(errorMsg);
         exit(0);
     }
 
@@ -58,8 +56,9 @@ int main(int argc, char **argv) {
     std::copy_if(all_files.begin(), all_files.end(), std::back_inserter(source_files),
             [](auto& file) { return Config::get().project.shouldInclude(file); });
     for (auto const& path : source_files) {
-        LOG_INFO("source file = {}", path);
+        LOG_INFO("source file = {%s}", path.c_str());
     }
-//    ClangTool tool{ *db.get(), db->getAllFiles() };
-//    return tool.run(newFrontendActionFactory<CodeBeaconGenFrontendAction>().get());
+    ClangTool tool{ *db.get(), source_files };
+    beacon::BeaconFrontendActionFactory factory;
+    return tool.run(&factory);
 }
