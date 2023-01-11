@@ -21,7 +21,9 @@ script目录下提供了一些分析这些模型数据的脚本例子，可以�
 
 
 状态：在写了在写了（新建文件夹.gif）
+
 状态: 写完了include依赖图生成，类图生成在另一个项目里，还没迁移orz
+
 状态: 前端好难我不会写 :-(
 
 ## 编译与使用
@@ -56,10 +58,13 @@ node gen-include-graph --json-dir ./data --output-dir ./result/includeGraph --wi
 
 ## libTooling的坑
 
-https://stackoverflow.com/questions/19642590/libtooling-cant-find-stddef-h-nor-other-headers
-https://clang.llvm.org/docs/LibTooling.html
-https://github.com/clangd/clangd/issues/1044
-https://clangd.llvm.org/troubleshooting#cant-find-compiler-built-in-headers-stddefh-etc
+[libtooling-cant-find-stddef-h-nor-other-headers](https://stackoverflow.com/questions/19642590/libtooling-cant-find-stddef-h-nor-other-headers)
+
+[LibTooling.html](https://clang.llvm.org/docs/LibTooling.html)
+
+[clangd/issues/1044](https://github.com/clangd/clangd/issues/1044)
+
+[troubleshooting#cant-find-compiler-built-in-headers-stddefh-etc](https://clangd.llvm.org/troubleshooting#cant-find-compiler-built-in-headers-stddefh-etc)
 
 查看如上后明白需要在二进制的相对路径(../lib/clang/16.0.0/include)要有对应文件。
 
