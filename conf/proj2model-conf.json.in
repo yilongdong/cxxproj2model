@@ -13,7 +13,7 @@
   },
   "output": {
     "temp-dir": "temp",
-    "result-file": "result",
+    "result-file": "@PROJECT_SOURCE_DIR@/scripts/data",
     "index-file": "index",
     "type": "json"
   }

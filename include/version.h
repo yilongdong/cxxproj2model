@@ -7,4 +7,4 @@
 [[maybe_unused]] static const inline int VERSION_MAJOR = 0;
 [[maybe_unused]] static const inline int VERSION_MINOR = 1;
 [[maybe_unused]] static const inline std::string VERSION = "v0.1";
-[[maybe_unused]] static const inline std::string COMPILE_TIMESTAMP = "2023-01-08_15:00:32";
+[[maybe_unused]] static const inline std::string COMPILE_TIMESTAMP = "2023-01-11_15:43:24";

@@ -1,8 +1,8 @@
 #include <fstream>
-#include "comm/log.h"
-#include "comm/json.hpp"
+#include "Comm/log.h"
+#include "Comm/json.hpp"
 #include "proj2model/Config.h"
-#include "comm/util/util.h"
+#include "Comm/Util/util.h"
 
 using json = nlohmann::json;
 

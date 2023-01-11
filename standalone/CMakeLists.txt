@@ -6,4 +6,5 @@ target_link_libraries(project2model
         ${ClangLLVMLibs}
         gflags
         comm::log
-        proj2model::config)
+        proj2model::config
+        Beacon)
