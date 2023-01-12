@@ -35,31 +35,21 @@ async function* allFiles(dir, regex) {
     }
 }
 
-function getLinksFromIncludeList(includeList) {
-    const links = includeList.map(function (includeInfo, index) {
-        const caller = includeInfo.hashLocInfo.file;
-        const callee = includeInfo.absolutePath;
+async function genLinksFromJsonFile(filename) {
+    const data = await readFile(filename, { encoding: 'utf-8' });
+    const TU = JSON.parse(data);
+    if (TU.includeList === undefined) {
+        return []
+    }
+    const links = TU.includeList.map(function (includeInfo, index) {
+        const caller = includeInfo.sourceLocation.file;
+        const callee = includeInfo.filename;
         return `\t"${caller}" -> "${callee}"`;
     })
     return [...new Set(links)];
 }
 
-async function genLinksFromJsonFile(filename) {
-    const data = await readFile(filename, { encoding: 'utf-8' });
-    const TUs = JSON.parse(data);
-    if (TUs.length === 0) {
-        return "";
-    }
-    return getLinksFromIncludeList(TUs[0].include_list);
-}
-
 async function doMain(jsonDir, outputDir, needMerge) {
-    if (jsonDir.endsWith('/')) {
-        jsonDir = jsonDir.substring(0, jsonDir.length - 1);
-    }
-    if (outputDir.endsWith('/')) {
-        outputDir = outputDir.substring(0, outputDir.length - 1);
-    }
     const linksMap = {}
     for await (const filename of allFiles(jsonDir, /\.json$/)) {
         if (!filename.endsWith('.json')) { continue; }
@@ -87,6 +77,12 @@ async function doMain(jsonDir, outputDir, needMerge) {
 async function main() {
     const options = program.opts();
     program.parse();
+    if (options.jsonDir.endsWith('/')) {
+        options.jsonDir = options.jsonDir.substring(0, options.jsonDir.length - 1);
+    }
+    if (options.outputDir.endsWith('/')) {
+        options.outputDir = options.outputDir.substring(0, options.outputDir.length - 1);
+    }
     await doMain(options.jsonDir, options.outputDir, options.withMerge);
 }
 

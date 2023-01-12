@@ -30,14 +30,13 @@ public:
     [[nodiscard]] std::string to_string(clang::FileEntryRef const& value) const;
     [[nodiscard]] std::string to_string(clang::Module const& value) const;
     [[nodiscard]] std::string to_string(llvm::StringRef const& value) const;
-    [[nodiscard]] beacon::model::HashLocInfo to_model(clang::SourceLocation const& value) const;
 
 };
 
 
-BeaconPPCallbackTracker::BeaconPPCallbackTracker(beacon::model::TranslationUnitModel &TUModel,
+BeaconPPCallbackTracker::BeaconPPCallbackTracker(beacon::model::TU &TU,
                                                  std::vector<std::regex> const&filters,
-                                                 clang::Preprocessor &PP) : TU(TUModel), filters(filters), PP(PP) {}
+                                                 clang::Preprocessor &PP) : TU(TU), filters(filters), PP(PP) {}
 
 BeaconPPCallbackTracker::~BeaconPPCallbackTracker() = default;
 
@@ -66,14 +65,19 @@ void BeaconPPCallbackTracker::InclusionDirective(clang::SourceLocation HashLoc,
         }
     }
 
-    TU.include_list.push_back({});
-    auto& includeInfo = TU.include_list.back();
-    includeInfo.hashLocInfo = convertor.to_model(HashLoc);
-    includeInfo.filename = convertor.to_string(FileName);
-    includeInfo.isAngleBracket = IsAngled;
-    includeInfo.absolutePath = absolutePath;
-    includeInfo.searchPath = convertor.to_string(SearchPath);
-    includeInfo.module = !Imported ? "(null)" : convertor.to_string(*Imported);
+
+    auto& includeInfo = *TU.add_include_list();
+    PresumedLoc PLoc = PP.getSourceManager().getPresumedLoc(HashLoc);
+    includeInfo.mutable_source_location()->set_is_invalid(PLoc.isInvalid());
+    includeInfo.mutable_source_location()->set_is_file_id(HashLoc.isFileID());
+    if (HashLoc.isFileID() && !PLoc.isInvalid()) {
+        includeInfo.mutable_source_location()->set_file(PLoc.getFilename());
+        includeInfo.mutable_source_location()->set_line((int)PLoc.getLine());
+        includeInfo.mutable_source_location()->set_column((int)PLoc.getColumn());
+    }
+    includeInfo.set_filename(absolutePath);
+    includeInfo.set_is_angle_bracket(IsAngled);
+    includeInfo.set_search_path(convertor.to_string(SearchPath));
 }
 
 void BeaconPPCallbackTracker::MacroExpands(const clang::Token &MacroNameTok,
@@ -128,19 +132,4 @@ std::string ClangTypeConvertor::to_string(const Module &value) const {
 
 std::string ClangTypeConvertor::to_string(const StringRef &value) const {
     return value.str();
-}
-
-beacon::model::HashLocInfo ClangTypeConvertor::to_model(const SourceLocation &value) const {
-    beacon::model::HashLocInfo locInfo;
-    locInfo.isInvalid = value.isInvalid();
-    locInfo.isFileID = value.isFileID();
-    PresumedLoc PLoc = PP.getSourceManager().getPresumedLoc(value);
-    locInfo.isInvalid |= PLoc.isInvalid();
-    if (locInfo.isInvalid || !locInfo.isFileID) {
-        return locInfo;
-    }
-    locInfo.file = PLoc.getFilename();
-    locInfo.line = PLoc.getLine();
-    locInfo.column = PLoc.getColumn();
-    return locInfo;
 }
