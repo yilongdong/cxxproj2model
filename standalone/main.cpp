@@ -26,7 +26,11 @@ namespace beacon {
                 std::regex ("^/usr/local/include/llvm-c/.*"),
                 std::regex ("^/usr/local/include/clang/.*"),
                 std::regex ("^/usr/local/include/clang-c/.*"),
-                std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/build/.*"),
+                std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/build/lib/.*"),
+                std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/include/Comm/.*"),
+                std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/src/Comm/.*"),
+                std::regex ("^/opt/homebrew/include/google/.*"),
+
             };
 
             return std::make_unique<BeaconFrontendAction>(filters);

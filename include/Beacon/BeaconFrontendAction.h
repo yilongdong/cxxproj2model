@@ -9,6 +9,7 @@
 
 #include "Comm/log.h"
 #include "Beacon/Tracker/BeaconPPCallbackTracker.h"
+#include "google/protobuf/util/json_util.h"
 #include "proj2model/Config.h"
 
 namespace beacon {
@@ -20,9 +21,9 @@ namespace beacon {
     protected:
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
                 clang::CompilerInstance &CI, clang::StringRef InFile) override {
-            TUModel.source_file = InFile.str();
+            TU.set_source_file(InFile.str());
             clang::Preprocessor &PP = CI.getPreprocessor();
-            PP.addPPCallbacks(std::make_unique<tracker::BeaconPPCallbackTracker>(TUModel, filters, PP));
+            PP.addPPCallbacks(std::make_unique<tracker::BeaconPPCallbackTracker>(TU, filters, PP));
             return std::make_unique<clang::ASTConsumer>();
         }
 
@@ -30,12 +31,10 @@ namespace beacon {
             auto const& config = proj2model::Config::get();
 
             std::hash<std::string> hash;
-            std::string filename  = config.output.result_file + "/" + std::to_string(hash(TUModel.source_file)) + ".json";
-            LOG_INFO("TU include list size = {%lu}", TUModel.include_list.size());
-            std::unordered_set<beacon::model::IncludeInfo> unique_include_list{TUModel.include_list.begin(),TUModel.include_list.end()};
-            TUModel.include_list = std::vector<beacon::model::IncludeInfo>{unique_include_list.begin(), unique_include_list.end()};
-            LOG_INFO("TU unique include list size = {%lu}", TUModel.include_list.size());
-            std::string content = nlohmann::json{TUModel}.dump(4);
+            std::string filename  = config.output.result_file + "/" + std::to_string(hash(TU.source_file())) + ".json";
+            LOG_INFO("TU include list size = %d", TU.include_list_size());
+            std::string content;
+            google::protobuf::util::MessageToJsonString(TU, &content);
             {
                 std::ofstream fout(filename);
                 if(!fout.is_open()) {
@@ -49,7 +48,7 @@ namespace beacon {
         }
 
     private:
-        model::TranslationUnitModel TUModel;
+        beacon::model::TU TU;
         std::vector<Filter> const& filters;
     };
 }

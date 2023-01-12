@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package beacon.model;
+
+message SourceLocation {
+  optional string file = 1;
+  optional int32 line = 2;
+  optional int32 column = 3;
+  optional bool is_invalid = 4;
+  optional bool is_file_id = 5;
+}
+
+message Namespace {
+  message Segment {
+    optional string name = 1;
+    enum Type {
+      NS_UNKNOWN = 0;
+      NS_NORMAL = 1;
+      NS_CLASSNAME = 2;
+    };
+    optional Type type = 2;
+  }
+  repeated Segment segment = 1;
+}
+
+message Macro {
+  message Define {
+    optional string name = 1;
+  };
+  message Expand {
+    optional string content = 1;
+  };
+  optional SourceLocation source_location = 1; // 源码位置
+  optional bool is_expand = 2;
+  optional Define define = 3;
+  optional Expand expand = 4;
+}
+
+message Include {
+  optional string filename = 1; // 绝对路径
+  optional string search_path = 2; // 搜索路径
+  optional bool is_angle_bracket = 3; // 是否在尖括号内
+  optional SourceLocation source_location = 4; // 源码位置
+}
+
+message Variable {
+
+}
+
+message Function {
+
+}
+
+message Class {
+
+}
+
+
+message TU {
+  optional string source_file = 1;
+  repeated Macro macro_list = 2;
+  repeated Include include_list = 3;
+  repeated Class class_list = 4;
+  repeated Variable var_list = 5;
+  repeated Function func_list = 6;
+}

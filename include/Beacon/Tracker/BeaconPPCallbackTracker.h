@@ -3,18 +3,18 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
-#include "Beacon/Model/TranslationUnitModel.h"
+#include "TU.pb.h"
 
 namespace beacon::tracker {
         using namespace clang;
         class BeaconPPCallbackTracker : public clang::PPCallbacks {
-            model::TranslationUnitModel &TU;
+            beacon::model::TU &TU;
             std::vector<std::regex> const&filters;
             clang::Preprocessor &PP;
 
 
         public:
-            BeaconPPCallbackTracker(model::TranslationUnitModel &TUModel, std::vector<std::regex> const& filters,clang::Preprocessor &PP);
+            BeaconPPCallbackTracker(beacon::model::TU &TU, std::vector<std::regex> const& filters,clang::Preprocessor &PP);
             ~BeaconPPCallbackTracker() override;
 
             void FileChanged(SourceLocation Loc, PPCallbacks::FileChangeReason Reason,

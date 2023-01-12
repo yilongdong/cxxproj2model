@@ -1,6 +1,4 @@
-target_sources(Beacon
-        PRIVATE
-        TranslationUnitModel.cpp)
+add_subdirectory(proto)
 target_link_libraries(Beacon
         PUBLIC
-        comm::json)
+        TUModel)
