@@ -4,6 +4,7 @@
 
 - [proj2model](#proj2model)
   - [介绍](#%E4%BB%8B%E7%BB%8D)
+  - [目标](#%E7%9B%AE%E6%A0%87)
   - [编译与使用](#%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BD%BF%E7%94%A8)
   - [效果展示](#%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA)
     - [include依赖图](#include%E4%BE%9D%E8%B5%96%E5%9B%BE)
@@ -13,7 +14,7 @@
       - [以编译单元为单位](#%E4%BB%A5%E7%BC%96%E8%AF%91%E5%8D%95%E5%85%83%E4%B8%BA%E5%8D%95%E4%BD%8D-1)
       - [合并结果](#%E5%90%88%E5%B9%B6%E7%BB%93%E6%9E%9C-1)
     - [UML图](#uml%E5%9B%BE)
-    - [脚本编写指南](#%E8%84%9A%E6%9C%AC%E7%BC%96%E5%86%99%E6%8C%87%E5%8D%97)
+  - [脚本编写指南](#%E8%84%9A%E6%9C%AC%E7%BC%96%E5%86%99%E6%8C%87%E5%8D%97)
   - [libTooling的坑](#libtooling%E7%9A%84%E5%9D%91)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -28,6 +29,15 @@ script目录下提供了一些分析这些模型数据的脚本例子，可以�
 
 状态: 写完了include依赖图生成，类继承图生成。类图生成的脚本还没写，但是生成类图的数据已经有了。
 
+## 目标
+
+- 基于node.js和vue搭建写一个代码监控平台，在项目分析得到的json分析模型基础上开发分析插件。
+
+- 部署在一个服务器上，定时clone关注的项目代码，在web页面进行分析交互与展示。
+
+- 结合git，提供增量分析功能。
+
+- 比较不同版本的代码结构，类间耦合，模块化情况。在合流代码时自动拦截低质量代码，警示糟糕的代码设计。
 
 ## 编译与使用
 ```shell
@@ -73,8 +83,11 @@ node gen-graph --json-dir ./data --output-dir ./result/graph --with-merge --type
 ### UML图
 虽然分析数据已经有了，但是生成UML图的js脚本还没写...
 
+分析数据示例可见[data.json](asset/5815163906600373956.json)
+
 ## 脚本编写指南
 使用js分析如下proto产生的json文件，可以参考script目录下的gen-graph.js脚本
+json数据示例可见[data.json](asset/5815163906600373956.json)
 ```protobuf
 syntax = "proto3";
 
@@ -205,6 +218,97 @@ message TU {
   repeated Class class_list = 4;
   repeated Variable var_list = 5;
   repeated Function func_list = 6;
+}
+```
+
+json示例数据如下
+```json
+{
+  "file": {
+    "name": "/Users/dongyilong/Documents/毕业设计/repo/project2model/src/proj2model/Config.cpp"
+  },
+  "includeList": [
+    {
+      "file": {
+        "name": "/Users/dongyilong/Documents/毕业设计/repo/project2model/include/proj2model/Config.h"
+      },
+      "isAngleBracket": false,
+      "sourceLocation": {
+        "file": "/Users/dongyilong/Documents/毕业设计/repo/project2model/src/proj2model/Config.cpp",
+        "line": 4,
+        "column": 1,
+        "isInvalid": false,
+        "isFileId": true
+      }
+    }
+  ],
+  "classList": [
+    {
+      "name": "begin_tag",
+      "isStruct": true
+    },
+    {
+      "name": "would_call_std_begin",
+      "isStruct": true
+    },
+    {
+      "name": "would_call_std_begin",
+      "baseList": [
+        {
+          "name": "detail2::would_call_std_begin\u003cT...\u003e",
+          "access": "AC_PUBLIC",
+          "isVirtual": false
+        }
+      ],
+      "isStruct": true
+    },
+    {
+      "name": "end_tag",
+      "isStruct": true
+    },
+    {
+      "name": "would_call_std_end",
+      "isStruct": true
+    },
+    {
+      "name": "would_call_std_end",
+      "baseList": [
+        {
+          "name": "detail2::would_call_std_end\u003cT...\u003e",
+          "access": "AC_PUBLIC",
+          "isVirtual": false
+        }
+      ],
+      "isStruct": true
+    },
+    {
+      "name": "hash",
+      "methodList": [
+        {
+          "name": "operator()",
+          "returnType": "std::size_t",
+          "paramList": [
+            {
+              "var": {
+                "name": "j",
+                "type": "const nlohmann::basic_json\u003cObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType\u003e &"
+              }
+            }
+          ],
+          "access": "AC_PUBLIC",
+          "isVirtual": false,
+          "isPureVirtual": false,
+          "isConst": true,
+          "isDefault": false,
+          "isStatic": false,
+          "isImplicit": false,
+          "isDelete": false,
+          "isDeprecated": false
+        }
+      ],
+      "isStruct": true
+    }
+  ]
 }
 ```
 
