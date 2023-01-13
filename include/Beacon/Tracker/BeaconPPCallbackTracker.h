@@ -12,10 +12,11 @@ namespace beacon::tracker {
             std::vector<std::regex> const&filters;
             clang::Preprocessor &PP;
 
-
         public:
             BeaconPPCallbackTracker(beacon::model::TU &TU, std::vector<std::regex> const& filters,clang::Preprocessor &PP);
             ~BeaconPPCallbackTracker() override;
+
+            bool isExcludeFile(std::string const& filename);
 
             void FileChanged(SourceLocation Loc, PPCallbacks::FileChangeReason Reason,
                              SrcMgr::CharacteristicKind FileType,

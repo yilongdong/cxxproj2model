@@ -40,12 +40,16 @@ BeaconPPCallbackTracker::BeaconPPCallbackTracker(beacon::model::TU &TU,
 
 BeaconPPCallbackTracker::~BeaconPPCallbackTracker() = default;
 
+bool BeaconPPCallbackTracker::isExcludeFile(std::string const& filename) {
+    return std::any_of(filters.begin(), filters.end(), [&filename](std::regex const& regex) {
+        return std::regex_match(filename, regex);
+    });
+}
+
 void BeaconPPCallbackTracker::FileChanged(clang::SourceLocation Loc,
                                           clang::PPCallbacks::FileChangeReason Reason,
                                           clang::SrcMgr::CharacteristicKind FileType,
-                                          clang::FileID PrevFID) {
-//    LOG_INFO("FileChanged");
-}
+                                          clang::FileID PrevFID) {}
 
 void BeaconPPCallbackTracker::InclusionDirective(clang::SourceLocation HashLoc,
                                                  const clang::Token &IncludeTok,
@@ -56,16 +60,11 @@ void BeaconPPCallbackTracker::InclusionDirective(clang::SourceLocation HashLoc,
                                                  llvm::StringRef RelativePath,
                                                  const clang::Module *Imported,
                                                  clang::SrcMgr::CharacteristicKind FileType) {
-
     ClangTypeConvertor convertor(PP);
-    auto absolutePath = !File ? "(null)" : convertor.to_string(*File);
-    for (auto const& regex : filters) {
-        if (std::regex_match(absolutePath, regex)) {
-            return;
-        }
+    auto filename = !File ? "(null)" : convertor.to_string(*File);
+    if (isExcludeFile(filename)) {
+        return;
     }
-
-
     auto& includeInfo = *TU.add_include_list();
     PresumedLoc PLoc = PP.getSourceManager().getPresumedLoc(HashLoc);
     includeInfo.mutable_source_location()->set_is_invalid(PLoc.isInvalid());
@@ -75,9 +74,8 @@ void BeaconPPCallbackTracker::InclusionDirective(clang::SourceLocation HashLoc,
         includeInfo.mutable_source_location()->set_line((int)PLoc.getLine());
         includeInfo.mutable_source_location()->set_column((int)PLoc.getColumn());
     }
-    includeInfo.set_filename(absolutePath);
+    includeInfo.mutable_file()->set_name(filename);
     includeInfo.set_is_angle_bracket(IsAngled);
-    includeInfo.set_search_path(convertor.to_string(SearchPath));
 }
 
 void BeaconPPCallbackTracker::MacroExpands(const clang::Token &MacroNameTok,

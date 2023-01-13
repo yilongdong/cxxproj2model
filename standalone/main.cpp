@@ -1,11 +1,9 @@
 #include <algorithm>
 #include <regex>
 #include <vector>
-#include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Tooling/CompilationDatabase.h>
-#include <llvm/Support/CommandLine.h>
 #include <gflags/gflags.h>
 #include "version.h"
 #include "Beacon/BeaconFrontendAction.h"
@@ -15,7 +13,6 @@ using namespace clang::tooling;
 using Config = proj2model::Config;
 
 namespace beacon {
-// https://clang.llvm.org/extra/pp-trace.html
     class BeaconFrontendActionFactory : public clang::tooling::FrontendActionFactory {
         std::unique_ptr<clang::FrontendAction> create() override {
             static std::vector<std::regex> filters {
@@ -30,7 +27,6 @@ namespace beacon {
                 std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/include/Comm/.*"),
                 std::regex ("^/Users/dongyilong/Documents/毕业设计/repo/project2model/src/Comm/.*"),
                 std::regex ("^/opt/homebrew/include/google/.*"),
-
             };
 
             return std::make_unique<BeaconFrontendAction>(filters);
