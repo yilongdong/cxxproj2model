@@ -1,3 +1,5 @@
 target_sources(Beacon
         PRIVATE
-        BeaconPPCallbackTracker.cpp)
+        BeaconPPCallbackTracker.cpp
+        ClassMatchCallback.cpp
+        FuncCallFuncExprCallback.cpp)

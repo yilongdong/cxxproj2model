@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package beacon.model;
+
+message File {
+  optional string name = 1;
+  optional string git_commit_id = 2;
+}
+
+message SourceLocation {
+  optional string file = 1;
+  optional int32 line = 2;
+  optional int32 column = 3;
+  optional bool is_invalid = 4;
+  optional bool is_file_id = 5;
+}
+
+message Namespace {
+  message Segment {
+    optional string name = 1;
+    enum Type {
+      NS_UNKNOWN = 0;
+      NS_NORMAL = 1;
+      NS_CLASSNAME = 2;
+    };
+    optional Type type = 2;
+  }
+  repeated Segment segment = 1;
+}
+
+message Macro {
+  message Define {
+    optional string name = 1;
+  };
+  message Expand {
+    optional string content = 1;
+  };
+  optional SourceLocation source_location = 1; // 源码位置
+  optional bool is_expand = 2;
+  optional Define define = 3;
+  optional Expand expand = 4;
+}
+
+message Include {
+  optional File file = 1; // #include了什么文件
+  optional bool is_angle_bracket = 2; // 是否在尖括号内
+  optional SourceLocation source_location = 3; // #include所在源码位置
+}
+
+message Template {
+  // 模板有点复杂，先不考虑
+}
+
+message Variable {
+  optional string name = 1;
+  optional string type = 2;
+  optional Template template_ = 3;
+}
+
+message Param {
+  optional Variable var = 1;
+  optional string default_value = 2;
+}
+
+message Function {
+  optional string name = 1;
+  optional string return_type = 2;
+  repeated Param param_list = 3;
+  optional SourceLocation source_location = 4;
+  optional bool is_static = 5;
+  optional Template template_ = 6;
+}
+
+message Class {
+  enum Access {
+    AC_UNKNOWN = 0;
+    AC_PUBLIC = 1;
+    AC_PRIVATE = 2;
+    AC_PROTECTED = 3;
+  }
+
+  message Field {
+    optional Access access = 1;
+    optional Variable var = 2;
+  }
+
+  message Method {
+    optional string name = 1;
+    optional string return_type = 2;
+    repeated Param param_list = 3;
+    optional Access access = 4;
+
+    // 有时间搞成几个枚举
+    optional bool is_virtual = 5;
+    optional bool is_pure_virtual = 6;
+    optional bool is_const = 7;
+    optional bool is_default = 8;
+    optional bool is_static = 9;
+    optional bool is_implicit = 10;
+    optional bool is_delete = 11;
+    optional bool is_deprecated = 12;
+  }
+
+  message Base {
+    optional string name = 1;
+    optional Namespace namespace_ = 2;
+    optional Access access = 3;
+    optional bool is_virtual = 4;
+    optional Template template_ = 5;
+  }
+
+  // 一般都用匿名struct，需要提取struct typedef 的名字
+  optional string name = 1;
+  optional Namespace namespace_ = 2;
+  optional SourceLocation source_location = 3;
+  repeated Field field_list = 4;
+  repeated Method method_list = 5;
+  repeated Base base_list = 6;
+  optional Template template_ = 7;
+  optional bool is_struct = 8;
+}
+
+message TU {
+  optional File file = 1;
+  repeated Macro macro_list = 2;
+  repeated Include include_list = 3;
+  repeated Class class_list = 4;
+  repeated Variable var_list = 5;
+  repeated Function func_list = 6;
+}
