@@ -14,6 +14,7 @@
       - [以编译单元为单位](#%E4%BB%A5%E7%BC%96%E8%AF%91%E5%8D%95%E5%85%83%E4%B8%BA%E5%8D%95%E4%BD%8D-1)
       - [合并结果](#%E5%90%88%E5%B9%B6%E7%BB%93%E6%9E%9C-1)
     - [UML图](#uml%E5%9B%BE)
+      - [以编译单元为单位](#%E4%BB%A5%E7%BC%96%E8%AF%91%E5%8D%95%E5%85%83%E4%B8%BA%E5%8D%95%E4%BD%8D-2)
   - [脚本编写指南](#%E8%84%9A%E6%9C%AC%E7%BC%96%E5%86%99%E6%8C%87%E5%8D%97)
   - [libTooling的坑](#libtooling%E7%9A%84%E5%9D%91)
 
@@ -25,15 +26,15 @@
 
 可以在分析模型基础上进行进一步的项目静态分析，免于直接处理AST，便于后续并行处理等等。
 
-script目录下提供了一些分析这些模型数据的脚本例子，可以生成项目的include依赖图与类继承图等等
+script目录下提供了一些分析这些模型数据的脚本例子，可以生成项目的include依赖图,类继承图,UML图等等
 
-状态: 写完了include依赖图生成，类继承图生成。类图生成的脚本还没写，但是生成类图的数据已经有了。
+状态: 写完了include依赖图生成，类继承图生成。类图生成的脚本还没完全写，但是已经可以用了。
 
 ## 目标
 
 - 基于node.js和vue搭建写一个代码监控平台，在项目分析得到的json分析模型基础上开发分析插件。
 
-- 部署在一个服务器上，定时clone关注的项目代码，在web页面进行分析交互与展示。
+- 部署在一个服务器上，定时同步关注的项目代码，在web页面进行分析交互与展示。
 
 - 结合git，提供增量分析功能。
 
@@ -59,6 +60,11 @@ cd ../script
 # node前安好 shelljs, commander
 node gen-graph --help
 node gen-graph --json-dir ./data --output-dir ./result/graph --with-merge --types include base
+
+brew install plantuml
+
+node gen-class --help
+node gen-class --json-dir ./data --output-dir ./result/graph
 ```
 
 ## 效果展示
@@ -81,146 +87,79 @@ node gen-graph --json-dir ./data --output-dir ./result/graph --with-merge --type
 ![all.json.base.dot.png](asset/base/merge-all.base.dot.png)
 
 ### UML图
-虽然分析数据已经有了，但是生成UML图的js脚本还没写...
-
-分析数据示例可见[data.json](asset/5815163906600373956.json)
-
-## 脚本编写指南
-使用js分析如下proto产生的json文件，可以参考script目录下的gen-graph.js脚本
-json数据示例可见[data.json](asset/5815163906600373956.json)
-```protobuf
-syntax = "proto3";
-
-package beacon.model;
-
-message File {
-  optional string name = 1;
-  optional string git_commit_id = 2;
+gen-class是一个写了1/3的UML生成脚本。
+脚本会分析TU.json生成如下的plantuml文件，然后调用plantuml生成图片。目前只展示了继承关系和主要类信息
+```plantuml
+@startuml
+class BeaconPPCallbackTracker {
+	{field} - beacon::model::TU & TU
+	{field} - const std::vector<std::regex> & filters
+	{field} - clang::Preprocessor & PP
+	{method} + void BeaconPPCallbackTracker(beacon::model::TU & TU, const std::vector<std::regex> & filters, clang::Preprocessor & PP)
+	{method} {abstract} + void ~BeaconPPCallbackTracker()
+	{method} + _Bool isExcludeFile(const std::string & filename)
+	{method} {abstract} + void FileChanged(SourceLocation Loc, class PPCallbacks::FileChangeReason Reason, SrcMgr::CharacteristicKind FileType, FileID PrevFID)
+	{method} {abstract} + void InclusionDirective(SourceLocation HashLoc, const Token & IncludeTok, llvm::StringRef FileName, _Bool IsAngled, CharSourceRange FilenameRange, Optional<FileEntryRef> File, llvm::StringRef SearchPath, llvm::StringRef RelativePath, const Module * Imported, SrcMgr::CharacteristicKind FileType)
+	{method} {abstract} + void MacroExpands(const Token & MacroNameTok, const MacroDefinition & MD, SourceRange Range, const MacroArgs * Args)
+	{method} {abstract} + void MacroDefined(const Token & MacroNameTok, const MacroDirective * MD)
+	{method} {abstract} + void MacroUndefined(const Token & MacroNameTok, const MacroDefinition & MD, const MacroDirective * Undef)
 }
-
-message SourceLocation {
-  optional string file = 1;
-  optional int32 line = 2;
-  optional int32 column = 3;
-  optional bool is_invalid = 4;
-  optional bool is_file_id = 5;
+class FilterConfig {
+	{field} + std::string path
+	{field} + enum Type type
+	
 }
-
-message Namespace {
-  message Segment {
-    optional string name = 1;
-    enum Type {
-      NS_UNKNOWN = 0;
-      NS_NORMAL = 1;
-      NS_CLASSNAME = 2;
-    };
-    optional Type type = 2;
-  }
-  repeated Segment segment = 1;
+class ProjectConfig {
+	{field} + std::string name
+	{field} + std::string compdb
+	{field} + std::string root_dir
+	{field} + std::vector<struct FilterConfig> path_filters
+	{method} + _Bool shouldInclude(const std::string & path)
 }
-
-message Macro {
-  message Define {
-    optional string name = 1;
-  };
-  message Expand {
-    optional string content = 1;
-  };
-  optional SourceLocation source_location = 1; // 源码位置
-  optional bool is_expand = 2;
-  optional Define define = 3;
-  optional Expand expand = 4;
+class OutputConfig {
+	{field} + std::string temp_dir
+	{field} + std::string result_file
+	{field} + std::string index_file
+	{field} + enum Type type
+	
 }
-
-message Include {
-  optional File file = 1; // #include了什么文件
-  optional bool is_angle_bracket = 2; // 是否在尖括号内
-  optional SourceLocation source_location = 3; // #include所在源码位置
+class Config {
+	{field} + struct ProjectConfig project
+	{field} + struct OutputConfig output
+	{method} {static} + Config & init(const std::string & filename)
+	{method} {static} + const Config & get()
+	{method} - void loadFromFile(const std::string & filename)
+	{method} - void Config()
+	{method} - void Config(const std::string & filename)
+	{method} - void ~Config()
+	{method} - void Config(const Config & )
+	{method} - Config & operator=(const Config & )
 }
-
-message Template {
-  // 模板有点复杂，先不考虑
+class BeaconFrontendAction {
+	{field} - beacon::model::TU TU
+	{field} - const std::vector<Filter> & filters
+	{method} + void BeaconFrontendAction(const std::vector<Filter> & filters)
+	{method} {abstract} # std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance & CI, clang::StringRef InFile)
+	{method} {abstract} # void EndSourceFileAction()
 }
-
-message Variable {
-  optional string name = 1;
-  optional string type = 2;
-  optional Template template_ = 3;
+class BeaconFrontendActionFactory {
+	
+	{method} {abstract} - std::unique_ptr<clang::FrontendAction> create()
 }
-
-message Param {
-  optional Variable var = 1;
-  optional string default_value = 2;
-}
-
-message Function {
-  optional string name = 1;
-  optional string return_type = 2;
-  repeated Param param_list = 3;
-  optional SourceLocation source_location = 4;
-  optional bool is_static = 5;
-  optional Template template_ = 6;
-}
-
-message Class {
-  enum Access {
-    AC_UNKNOWN = 0;
-    AC_PUBLIC = 1;
-    AC_PRIVATE = 2;
-    AC_PROTECTED = 3;
-  }
-
-  message Field {
-    optional Access access = 1;
-    optional Variable var = 2;
-  }
-
-  message Method {
-    optional string name = 1;
-    optional string return_type = 2;
-    repeated Param param_list = 3;
-    optional Access access = 4;
-
-    // 有时间搞成几个枚举
-    optional bool is_virtual = 5;
-    optional bool is_pure_virtual = 6;
-    optional bool is_const = 7;
-    optional bool is_default = 8;
-    optional bool is_static = 9;
-    optional bool is_implicit = 10;
-    optional bool is_delete = 11;
-    optional bool is_deprecated = 12;
-  }
-
-  message Base {
-    optional string name = 1;
-    optional Namespace namespace_ = 2;
-    optional Access access = 3;
-    optional bool is_virtual = 4;
-    optional Template template_ = 5;
-  }
-
-  // 一般都用匿名struct，需要提取struct typedef 的名字
-  optional string name = 1;
-  optional Namespace namespace_ = 2;
-  optional SourceLocation source_location = 3;
-  repeated Field field_list = 4;
-  repeated Method method_list = 5;
-  repeated Base base_list = 6;
-  optional Template template_ = 7;
-  optional bool is_struct = 8;
-}
-
-message TU {
-  optional File file = 1;
-  repeated Macro macro_list = 2;
-  repeated Include include_list = 3;
-  repeated Class class_list = 4;
-  repeated Variable var_list = 5;
-  repeated Function func_list = 6;
-}
+class UNKNOWN {}
+class UNKNOWN {}
+BeaconPPCallbackTracker --|> clang::PPCallbacks
+BeaconFrontendAction --|> clang::ASTFrontendAction
+BeaconFrontendActionFactory --|> clang::tooling::FrontendActionFactory
+@enduml
 ```
-
+#### 以编译单元为单位
+![4715888862877329286.json.class.png](asset/class/4715888862877329286.json.class.png)
+![5815163906600373956.json.class.png](asset/class/5815163906600373956.json.class.png)
+![17170161362952411038.json.class.png](asset/class/17170161362952411038.json.class.png)
+## 脚本编写指南
+使用js分析如下proto产生的json文件，可以参考script目录下的gen-graph.js和gen-class.js脚本
+json数据示例可见[data.json](asset/5815163906600373956.json)
 json示例数据如下
 ```json
 {
